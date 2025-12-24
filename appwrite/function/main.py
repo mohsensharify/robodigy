@@ -54,7 +54,7 @@ def main(context):
     ai_reply = data["choices"][0]["message"]["content"]
 
     context.log("AI reply:")
-        context.log(ai_reply)
+    context.log(ai_reply)
 
     return context.res.json({
         "reply": ai_reply
