@@ -4,6 +4,8 @@ import os
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 def main(context):
+    if not hasattr(context, "user") or not context.user:
+        return context.res.json({"error": "Unauthorized"}, status_code=401)
     # 🔐 Auth check
     if not context.user:
         return context.res.json(
