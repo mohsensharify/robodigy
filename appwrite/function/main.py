@@ -6,7 +6,9 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 def main(context):
     # بررسی Auth امن
     if not hasattr(context, "user") or not context.user:
-        return context.res.json({"error": "Unauthorized", "code": 401})
+        #return context.res.json({"error": "Unauthorized", "code": 401})
+        return res.text("<h1>Unauthorized</h1>", 401, {"content-type": "text/html"});
+
 
     user_id = context.user["$id"]
 
