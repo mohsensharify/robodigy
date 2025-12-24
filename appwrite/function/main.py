@@ -7,7 +7,7 @@ def main(context):
     # بررسی Auth امن
     if not hasattr(context, "user") or not context.user:
         #return context.res.json({"error": "Unauthorized", "code": 401})
-        return res.text("<h1>Unauthorized</h1>", 401, {"content-type": "text/html"});
+        return context.res.text("<h1>Unauthorized</h1>", 401, {"content-type": "text/html"});
 
 
     user_id = context.user["$id"]
