@@ -4,22 +4,22 @@ import os
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 def main(context):
-    # بررسی امن Auth
+    # بررسی Auth امن
     if not hasattr(context, "user") or not context.user:
-        return context.res.json({"error": "Unauthorized"}, status=401)
+        return context.res.json({"error": "Unauthorized", "code": 401})
 
     user_id = context.user["$id"]
 
     if context.req.method != "POST":
-        return context.res.json({"error": "Method not allowed"}, status=405)
+        return context.res.json({"error": "Method not allowed", "code": 405})
 
     body = context.req.body_json
     user_message = body.get("message", "").strip()
 
     if not user_message:
-        return context.res.json({"error": "Empty message"}, status=400)
+        return context.res.json({"error": "Empty message", "code": 400})
 
-    # درخواست به OpenRouter
+    # ارسال درخواست به OpenRouter
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={
