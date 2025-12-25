@@ -8,16 +8,29 @@ from appwrite.services.databases import Databases
 def main(context):
 
     # 🔐 Auth
-    if not hasattr(context, "user") or not context.user:
-        context.log("no user")
-        return context.res.text(
-            json.dumps({"error": "Unauthorized"}),
-            401,
-            {"content-type": "application/json"}
-        )
-
-    user_id = context.user["$id"]
-    context.log("user_id")
+    #if not hasattr(context, "user") or not context.user:
+    #    context.log("no user")
+    #    return context.res.text(
+    #        json.dumps({"error": "Unauthorized"}),
+    #        401,
+    #        {"content-type": "application/json"}
+    #    )
+    
+    #jwt = context.req.headers.get("x-appwrite-jwt")
+    #if not jwt:
+    #    context.log("no jwt")
+    #    return context.res.text(
+    #        json.dumps({"error": "Unauthorized"}),
+    #        401,
+    #        {"content-type": "application/json"}
+    #    )
+    
+    body = context.req.body_json
+    user_id = body.get("userId", "guest").strip()
+    #user_id = context.user["$id"]
+    context.log("user_id:")
+    context.log(user_id)
+    
     # 📥 Body
     body = context.req.body_json
     user_message = body.get("message", "").strip()
