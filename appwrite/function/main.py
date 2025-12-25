@@ -21,9 +21,9 @@ def main(context):
             {"content-type": "application/json"}
         )
 
-    context.log("user data:")
-    context.log(user_id)
-    context.log(user_message)
+    #context.log("user data:")
+    #context.log(user_id)
+    #context.log(user_message)
 
     # 🔌 Appwrite Client
     client = Client()
@@ -32,7 +32,7 @@ def main(context):
     client.set_key(os.environ["APPWRITE_API_KEY"])
 
     tables = TablesDB(client)
-    context.log("db")
+    #context.log("db")
 
     # 💾 ذخیره پیام کاربر
     tables.create_row(
@@ -46,7 +46,7 @@ def main(context):
             #,"createdAt": datetime.datetime.now(datetime.UTC)
         }
     )
-    context.log("row")
+    #context.log("row")
 
     # 🤖 OpenRouter
     response = requests.post(
@@ -64,11 +64,11 @@ def main(context):
         },
         timeout=30
     )
-    context.log("openrouter")
+    #context.log("openrouter")
 
     response.raise_for_status()
     ai_reply = response.json()["choices"][0]["message"]["content"]
-    context.log(ai_reply)
+    #context.log(ai_reply)
 
     # 💾 ذخیره پاسخ AI
     tables.create_row(
