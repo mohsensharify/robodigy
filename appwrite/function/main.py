@@ -38,7 +38,7 @@ def main(context):
     tables.create_row(
         database_id=os.environ["DATABASE_ID"],
         table_id=os.environ["COLLECTION_ID"],
-        #row_id = "unique()"
+        row_id = "unique()"
         data={
             "userId": user_id,
             "role": "user",
@@ -74,6 +74,7 @@ def main(context):
     tables.create_row(
         database_id=os.environ["DATABASE_ID"],
         table_id=os.environ["COLLECTION_ID"],
+        row_id = "unique()"
         data={
             "userId": user_id,
             "role": "assistant",
