@@ -4,7 +4,7 @@ import requests
 from datetime import datetime
 
 from appwrite.client import Client
-from appwrite.services.tables import TablesDB
+from appwrite.services.tables_db import TablesDB
 
 
 def main(context):
@@ -38,6 +38,7 @@ def main(context):
     tables.create_row(
         database_id=os.environ["DATABASE_ID"],
         table_id=os.environ["TABLE_ID"],
+        #row_id = "unique()"
         data={
             "userId": user_id,
             "role": "user",
