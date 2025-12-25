@@ -42,8 +42,8 @@ def main(context):
         data={
             "userId": user_id,
             "role": "user",
-            "content": user_message,
-            "createdAt": datetime.utcnow().isoformat()
+            "content": user_message
+            #,"createdAt": datetime.datetime.now(datetime.UTC)
         }
     )
     context.log("row")
@@ -78,8 +78,8 @@ def main(context):
         data={
             "userId": user_id,
             "role": "assistant",
-            "content": ai_reply,
-            "createdAt": datetime.utcnow().isoformat()
+            "content": ai_reply
+            #"createdAt": datetime.datetime.now(datetime.UTC)
         }
     )
 
