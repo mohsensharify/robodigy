@@ -13,7 +13,6 @@ def main(context):
     body = context.req.body_json or {}
     user_message = body.get("message", "").strip()
     user_id = body.get("userId", "guest").strip()
-    context.log("user data:")
 
     if not user_message:
         return context.res.text(
@@ -21,9 +20,10 @@ def main(context):
             400,
             {"content-type": "application/json"}
         )
-        
+
+    context.log("user data:")
     context.log(user_id)
-    user_message = body.get("message", "").strip()
+    context.log(user_message)
 
     # 🔌 Appwrite Client
     client = Client()
@@ -37,7 +37,7 @@ def main(context):
     # 💾 ذخیره پیام کاربر
     tables.create_row(
         database_id=os.environ["DATABASE_ID"],
-        table_id=os.environ["TABLE_ID"],
+        table_id=os.environ["COLLECTION_ID"],
         #row_id = "unique()"
         data={
             "userId": user_id,
@@ -73,7 +73,7 @@ def main(context):
     # 💾 ذخیره پاسخ AI
     tables.create_row(
         database_id=os.environ["DATABASE_ID"],
-        table_id=os.environ["TABLE_ID"],
+        table_id=os.environ["COLLECTION_ID"],
         data={
             "userId": user_id,
             "role": "assistant",
