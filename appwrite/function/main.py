@@ -2,59 +2,42 @@ import os
 import json
 import requests
 from datetime import datetime
+
 from appwrite.client import Client
-from appwrite.services.databases import Databases
+from appwrite.services.tables import TablesDB
+
 
 def main(context):
 
-    # 🔐 Auth
-    #if not hasattr(context, "user") or not context.user:
-    #    context.log("no user")
-    #    return context.res.text(
-    #        json.dumps({"error": "Unauthorized"}),
-    #        401,
-    #        {"content-type": "application/json"}
-    #    )
-    
-    #jwt = context.req.headers.get("x-appwrite-jwt")
-    #if not jwt:
-    #    context.log("no jwt")
-    #    return context.res.text(
-    #        json.dumps({"error": "Unauthorized"}),
-    #        401,
-    #        {"content-type": "application/json"}
-    #    )
-    
-    body = context.req.body_json
-    user_id = body.get("userId", "guest").strip()
-    #user_id = context.user["$id"]
-    context.log("user_id:")
-    context.log(user_id)
-    
     # 📥 Body
-    body = context.req.body_json
+    body = context.req.body_json or {}
     user_message = body.get("message", "").strip()
-    
+    user_id = body.get("userId", "guest").strip()
+    context.log("user data:")
+
     if not user_message:
         return context.res.text(
             json.dumps({"error": "Empty message"}),
             400,
             {"content-type": "application/json"}
         )
-    context.log("msg")
-    # 🔌 Appwrite DB
+        
+    context.log(user_id)
+    user_message = body.get("message", "").strip()
+
+    # 🔌 Appwrite Client
     client = Client()
     client.set_endpoint(os.environ["APPWRITE_ENDPOINT"])
     client.set_project(os.environ["APPWRITE_PROJECT_ID"])
     client.set_key(os.environ["APPWRITE_API_KEY"])
 
-    db = Databases(client)
+    tables = TablesDB(client)
     context.log("db")
+
     # 💾 ذخیره پیام کاربر
-    db.create_document(
+    tables.create_row(
         database_id=os.environ["DATABASE_ID"],
-        collection_id=os.environ["COLLECTION_ID"],
-        document_id="unique()",
+        table_id=os.environ["TABLE_ID"],
         data={
             "userId": user_id,
             "role": "user",
@@ -62,7 +45,8 @@ def main(context):
             "createdAt": datetime.utcnow().isoformat()
         }
     )
-    context.log("doc")
+    context.log("row")
+
     # 🤖 OpenRouter
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
@@ -80,13 +64,15 @@ def main(context):
         timeout=30
     )
     context.log("openrouter")
+
+    response.raise_for_status()
     ai_reply = response.json()["choices"][0]["message"]["content"]
     context.log(ai_reply)
+
     # 💾 ذخیره پاسخ AI
-    db.create_document(
+    tables.create_row(
         database_id=os.environ["DATABASE_ID"],
-        collection_id=os.environ["COLLECTION_ID"],
-        document_id="unique()",
+        table_id=os.environ["TABLE_ID"],
         data={
             "userId": user_id,
             "role": "assistant",
@@ -95,11 +81,9 @@ def main(context):
         }
     )
 
-    # 📤 Response نهایی
+    # 📤 Response
     return context.res.text(
-        json.dumps({
-            "reply": ai_reply
-        }),
+        json.dumps({"reply": ai_reply}, ensure_ascii=False),
         200,
         {"content-type": "application/json"}
     )
