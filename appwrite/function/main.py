@@ -6,6 +6,7 @@ from datetime import datetime
 from appwrite.client import Client
 from appwrite.services.account import Account
 from appwrite.services.databases import Databases  # در نسخه‌های جدید Databases جایگزین TablesDB شده است
+from appwrite.query import Query  # برای فیلتر کردن کوئری‌ها اضافه شد
 
 def main(context):
     # ۱. دریافت داده‌ها از بدنه درخواست (Payload)
@@ -44,6 +45,29 @@ def main(context):
     databases = Databases(admin_client)
 
     try:
+        RATE_LIMIT_WINDOW_SECONDS = os.environ["RATE_LIMIT_WINDOW_SECONDS"] or 60  # بازه زمانی (یک دقیقه)
+        MAX_MESSAGES_PER_WINDOW = os.environ["MAX_MESSAGES_PER_WINDOW"] or 5     # حداکثر تعداد مجاز
+        
+        now = datetime.utcnow()
+        since_time = (now - timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)).isoformat()
+
+        # کوئری برای پیدا کردن پیام‌های اخیر این کاربر
+        recent_messages = databases.list_documents(
+            database_id=os.environ["DATABASE_ID"],
+            collection_id=os.environ["COLLECTION_ID"],
+            queries=[
+                Query.equal("userId", user_id),
+                Query.greater_than_equal("$createdAt", since_time) # بررسی بر اساس زمان ساخت
+            ]
+        )
+
+        if recent_messages['total'] >= MAX_MESSAGES_PER_WINDOW:
+            context.log(f"Rate limit exceeded for user: {user_id}")
+            return context.res.json({
+                "reply": "شما بیش از حد مجاز پیام فرستاده‌اید. لطفا کمی صبر کنید."
+            }, 429) # کد ۴۲۹ برای Too Many Requests
+        
+        
         # ۵. ذخیره پیام کاربر در دیتابیس
         databases.create_document(
             database_id=os.environ["DATABASE_ID"],
