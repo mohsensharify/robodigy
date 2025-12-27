@@ -79,6 +79,42 @@ def main(context):
                 "content": user_message
             }
         )
+        
+        
+        #----------------------------------
+        
+        # ۱. واکشی تاریخچه پیام‌ها برای Context Window (مثلاً ۵ پیام آخر)
+        history_docs = databases.list_documents(
+            database_id=os.environ["DATABASE_ID"],
+            collection_id=os.environ["COLLECTION_ID"],
+            queries=[
+                Query.equal("userId", user_id),
+                Query.order_desc("$createdAt"), # دریافت از جدید به قدیم
+                Query.limit(5)                   # فقط ۵ پیام اخیر
+            ]
+        )
+
+        # ۲. ساخت لیست پیام‌ها برای ارسال به AI
+        # پیام‌ها را معکوس می‌کنیم تا ترتیب زمانی (قدیم به جدید) درست شود
+        formatted_history = []
+        for doc in reversed(history_docs['documents']):
+            formatted_history.append({
+                "role": doc['role'], 
+                "content": doc['content']
+            })
+
+        # ۳. اضافه کردن پیام فعلی کاربر به انتهای تاریخچه
+        # (اگر هنوز پیام فعلی را در دیتابیس ذخیره نکرده‌اید، اینجا اضافه کنید)
+        messages_for_ai = [
+            {"role": "system", "content": "You are a helpful AI support assistant."}
+        ]
+        messages_for_ai.extend(formatted_history)
+        
+        # اگر پیام فعلی در تاریخچه نبود (چون هنوز ذخیره نشده)، آن را دستی اضافه می‌کنیم:
+        #if not any(m['content'] == user_message for m in formatted_history):
+        #    messages_for_ai.append({"role": "user", "content": user_message})
+        
+        #----------------------------------
 
         # ۶. فراخوانی OpenRouter
         response = requests.post(
@@ -87,12 +123,16 @@ def main(context):
                 "Authorization": f"Bearer {os.environ['OPENROUTER_API_KEY']}",
                 "Content-Type": "application/json"
             },
+            #json={
+            #    "model": "gpt-4o-mini",
+            #    "messages": [
+            #        {"role": "system", "content": "You are a helpful AI support assistant."},
+            #        {"role": "user", "content": user_message}
+            #    ]
+            #},
             json={
                 "model": "gpt-4o-mini",
-                "messages": [
-                    {"role": "system", "content": "You are a helpful AI support assistant."},
-                    {"role": "user", "content": user_message}
-                ]
+                "messages": messages_for_ai # ارسال کل لیست به جای تک پیام
             },
             timeout=30
         )
