@@ -4,7 +4,7 @@ import requests
 from datetime import datetime
 
 from appwrite.client import Client
-from appwrite.services.tables import TablesDB
+from appwrite.services.tables_db import TablesDB
 
 
 def main(context):
