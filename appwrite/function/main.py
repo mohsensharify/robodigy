@@ -4,15 +4,32 @@ import requests
 from datetime import datetime
 
 from appwrite.client import Client
-from appwrite.services.tables_db import TablesDB
+from appwrite.services.tables import TablesDB
 
 
 def main(context):
 
-    # 📥 Body
+    # 🔐 Auth check (مهم)
+    if not hasattr(context, "user") or context.user is None:
+        context.log("Unauthorized: context.user is null")
+        return context.res.text(
+            json.dumps({"error": "Unauthorized"}),
+            401,
+            {"content-type": "application/json"}
+        )
+
+    user_id = context.user.get("$id")
+    if not user_id:
+        context.log("Unauthorized: user_id missing")
+        return context.res.text(
+            json.dumps({"error": "Unauthorized"}),
+            401,
+            {"content-type": "application/json"}
+        )
+
+    # 📥 Request body
     body = context.req.body_json or {}
     user_message = body.get("message", "").strip()
-    user_id = body.get("userId", "guest").strip()
 
     if not user_message:
         return context.res.text(
@@ -21,10 +38,6 @@ def main(context):
             {"content-type": "application/json"}
         )
 
-    #context.log("user data:")
-    #context.log(user_id)
-    #context.log(user_message)
-
     # 🔌 Appwrite Client
     client = Client()
     client.set_endpoint(os.environ["APPWRITE_ENDPOINT"])
@@ -32,23 +45,20 @@ def main(context):
     client.set_key(os.environ["APPWRITE_API_KEY"])
 
     tables = TablesDB(client)
-    #context.log("db")
 
     # 💾 ذخیره پیام کاربر
     tables.create_row(
         database_id=os.environ["DATABASE_ID"],
         table_id=os.environ["COLLECTION_ID"],
-        row_id = "unique()",
+        row_id="unique()",
         data={
             "userId": user_id,
             "role": "user",
             "content": user_message
-            #,"createdAt": datetime.datetime.now(datetime.UTC)
         }
     )
-    #context.log("row")
 
-    # 🤖 OpenRouter
+    # 🤖 OpenRouter call
     response = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={
@@ -64,28 +74,32 @@ def main(context):
         },
         timeout=30
     )
-    #context.log("openrouter")
 
-    response.raise_for_status()
+    if response.status_code != 200:
+        context.log(response.text)
+        return context.res.text(
+            json.dumps({"error": "AI service failed"}),
+            500,
+            {"content-type": "application/json"}
+        )
+
     ai_reply = response.json()["choices"][0]["message"]["content"]
-    #context.log(ai_reply)
 
     # 💾 ذخیره پاسخ AI
     tables.create_row(
         database_id=os.environ["DATABASE_ID"],
-        table_id=os.environ["COLLECTION_ID"],
-        row_id = "unique()",
+        table_id=os.environ["TABLE_ID"],
+        row_id="unique()",
         data={
             "userId": user_id,
             "role": "assistant",
             "content": ai_reply
-            #"createdAt": datetime.datetime.now(datetime.UTC)
         }
     )
 
     # 📤 Response
     return context.res.text(
-        json.dumps({"reply": ai_reply}, ensure_ascii=False),
+        json.dumps({"reply": ai_reply}),
         200,
         {"content-type": "application/json"}
     )
