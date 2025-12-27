@@ -45,8 +45,8 @@ def main(context):
     databases = Databases(admin_client)
 
     try:
-        RATE_LIMIT_WINDOW_SECONDS = os.environ["RATE_LIMIT_WINDOW_SECONDS"] or 60  # بازه زمانی (یک دقیقه)
-        MAX_MESSAGES_PER_WINDOW = os.environ["MAX_MESSAGES_PER_WINDOW"] or 5     # حداکثر تعداد مجاز
+        RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("RATE_LIMIT_WINDOW_SECONDS", 60))
+        MAX_MESSAGES_PER_WINDOW = int(os.environ.get("MAX_MESSAGES_PER_WINDOW", 5))
         
         now = datetime.utcnow()
         since_time = (now - timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)).isoformat()
